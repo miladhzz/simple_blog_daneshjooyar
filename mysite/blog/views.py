@@ -1,50 +1,56 @@
-from django.shortcuts import render, get_object_or_404
-from .models import Post, Comment
 from django.http import HttpResponse
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from .forms import CommentForm
+from django.shortcuts import render, get_object_or_404
+from . import models
+from django.core.paginator import Paginator
+from . import forms
 from taggit.models import Tag
 
-def post_list(request, tag_slug=None):
-    object_list = Post.objects.all()
-    tag = None
 
+def post_list(request, tag_slug=None):
     if tag_slug:
         tag = get_object_or_404(Tag, slug=tag_slug)
-        object_list = object_list.filter(tags__in=[tag])
+        posts = models.Post.objects.filter(status='published',
+                                           tags__in=[tag])
+    else:
+        posts = models.Post.objects.filter(status='published')
+    paginator = Paginator(posts, 3)
+    page_number = request.GET.get('page')
+    # print(page_number)
+    page_obj = paginator.get_page(page_number)
 
-    paginator = Paginator(object_list, 3)
-    current_page_number = request.GET.get('page')
-    try:
-        posts = paginator.page(current_page_number)
-    except PageNotAnInteger:
-        posts = paginator.page(1)
-    except EmptyPage:
-        posts = paginator.page(paginator.num_pages)
+    context = {
+        'page_obj': page_obj
+    }
+    # print(posts)
+    return render(request, "post_list.html", context=context)
 
-    return render(request, 'blog/post/list.html', {'posts': posts,
-                                                   'tag': tag})
 
-def post_detail(request, year, month, day, post):
-    post = get_object_or_404(Post, slug=post,
-                                 status='published',
-                                 created__year=year,
-                                 created__month=month,
-                                 created__day=day)
-    comments = post.comments.filter(active=True)
+def post_detail(request, year, month, day, slug):
+    post = get_object_or_404(models.Post,
+                             created_date__year=year,
+                             created_date__month=month,
+                             created_date__day=day,
+                             slug=slug,
+                             status='published')
+    # print(post.status)
+    comment_form = forms.CommentForm()
     new_comment = None
-    if request.method == 'POST':
-        comment_form = CommentForm(data=request.POST)
 
+    if request.method == 'POST':
+        comment_form = forms.CommentForm(data=request.POST)
         if comment_form.is_valid():
             new_comment = comment_form.save(commit=False)
             new_comment.post = post
             new_comment.save()
-    else:
-        comment_form = CommentForm()
 
-    return render(request, 'blog/post/detail.html', {'post': post,
-                                                     'comments': comments,
-                                                     'comment_form': comment_form,
-                                                     'new_comment': new_comment})
+    context = {
+        'post': post,
+        'comment_form': comment_form,
+        'new_comment': new_comment,
+    }
 
+    return render(request, "post_detail.html", context=context)
+
+
+def contact_us(request):
+    return render(request, "contact_us.html")

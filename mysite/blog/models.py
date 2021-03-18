@@ -1,47 +1,43 @@
 from django.db import models
 from django.contrib.auth.models import User
-from django.urls import reverse
+from django.shortcuts import reverse
 from taggit.managers import TaggableManager
+
 
 class Post(models.Model):
     STATUS_CHOICES = (
         ('draft', 'Draft'),
-        ('published', 'Published')
+        ('published', 'Published'),
     )
-    title = models.CharField(max_length=250)
+
+    title = models.CharField(max_length=250, unique=True)
     slug = models.SlugField(max_length=250, unique=True)
-    author = models.ForeignKey(User, related_name='post_author', on_delete=models.CASCADE)
+    author = models.ForeignKey(User, on_delete=models.CASCADE)
     body = models.TextField()
-    created = models.DateTimeField(auto_now_add=True)
-    updated = models.DateTimeField(auto_now_add=True)
+    created_date = models.DateTimeField(auto_now_add=True)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='draft')
     tags = TaggableManager()
 
-    class Meta:
-        ordering = ('-created',)
-    
-    def __str__ (self):
+    def __str__(self):
         return self.title
-    
+
     def get_absolute_url(self):
-        return reverse('post_detail', args=[self.created.year,
-                                            self.created.strftime('%m'),
-                                            self.created.strftime('%d'),
+        return reverse('post_detail', args=[self.created_date.year,
+                                            self.created_date.strftime('%m'),
+                                            self.created_date.strftime('%d'),
                                             self.slug])
+
+    def active_comment(self):
+        return self.comment_set.filter(active=True)
 
 
 class Comment(models.Model):
-    post = models.ForeignKey(Post, related_name='comments', on_delete=models.CASCADE)
-    name = models.CharField(max_length=80)
+    post = models.ForeignKey(Post, on_delete=models.CASCADE)
+    name = models.CharField(max_length=100)
     email = models.EmailField()
-    body = models.TextField()
-    created = models.DateTimeField(auto_now_add=True)
+    comment = models.CharField(max_length=500)
     active = models.BooleanField(default=False)
+    created_date = models.DateTimeField(auto_now_add=True)
 
-    class Meta:
-        ordering = ('created',)
-    
     def __str__(self):
-        return 'Comment by {} on {}'.format(self.name, self.post)
-
-
+        return "{} by {}".format(self.comment, self.name)

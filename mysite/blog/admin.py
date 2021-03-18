@@ -1,18 +1,18 @@
 from django.contrib import admin
-from .models import Post, Comment
+from . import models
 
-# Register your models here.
 
 class PostAdmin(admin.ModelAdmin):
-    list_display = ('title', 'author', 'status', 'created')
-    list_filter = ('title', 'author', 'status', 'created')
-    search_fields = ('title', 'body')
+    list_display = ('title', 'author', 'created_date', 'status',)
+    list_filter = ('title', 'author', 'status',)
+    search_fields = ('title',)
 
 
 class CommentAdmin(admin.ModelAdmin):
-    list_display = ('name', 'email', 'post', 'created', 'active')
-    list_filter = ('created', 'active')
-    search_fields = ('name', 'email')
+    list_display = ('name', 'email', 'created_date', 'active',)
+    list_filter = ('name', 'email', 'active',)
+    search_fields = ('comment',)
 
-admin.site.register(Post, PostAdmin)
-admin.site.register(Comment, CommentAdmin)
+
+admin.site.register(models.Post, PostAdmin)
+admin.site.register(models.Comment, CommentAdmin)

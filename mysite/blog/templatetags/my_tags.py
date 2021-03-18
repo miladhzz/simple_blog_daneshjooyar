@@ -1,11 +1,13 @@
 from django import template
 from ..models import Post
 
+
 register = template.Library()
 
+
 @register.simple_tag
-def total_posts():
-    return Post.objects.all().count()
+def total_count():
+    return Post.objects.filter(status='published').count()
 
 
 @register.simple_tag
