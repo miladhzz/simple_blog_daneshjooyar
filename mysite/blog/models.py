@@ -5,19 +5,25 @@ from taggit.managers import TaggableManager
 
 
 class Post(models.Model):
-    STATUS_CHOICES = (
-        ('draft', 'Draft'),
-        ('published', 'Published'),
-    )
+    
+    class PostStatus(models.TextChoices):
+        PUBLISHED = 'P', 'Published'
+        DRAFT = 'D', 'Draft'
+
 
     title = models.CharField(max_length=250, unique=True)
     slug = models.SlugField(max_length=250, unique=True)
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     body = models.TextField()
     created_date = models.DateTimeField(auto_now_add=True)
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='draft')
     tags = TaggableManager()
-
+    status = models.CharField(
+        max_length=1,
+        default=PostStatus.Draft,
+        choices=PostStatus.choices,
+    )
+    
+    
     def __str__(self):
         return self.title
 
